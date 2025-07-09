@@ -1,0 +1,803 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Photex AI| AI Image to Prompt Generator</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --primary: #6e44ff;
+            --primary-dark: #5a36d6;
+            --secondary: #00f7ff;
+            --accent: #ff2d75;
+            --dark: #0f0a24;
+            --darker: #090616;
+            --light: #f0f0ff;
+            --gray: #a0a0c0;
+            --glass: rgba(255, 255, 255, 0.05);
+            --glass-border: rgba(255, 255, 255, 0.1);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', 'Roboto', 'Helvetica Neue', sans-serif;
+        }
+        
+        body {
+            background: var(--dark);
+            color: var(--light);
+            background-image: 
+                radial-gradient(circle at 25% 25%, rgba(110, 68, 255, 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 75% 75%, rgba(0, 247, 255, 0.15) 0%, transparent 50%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            line-height: 1.6;
+        }
+        
+        /* Futuristic Header */
+        header {
+            background: var(--darker);
+            border-bottom: 1px solid var(--glass-border);
+            padding: 1rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 100;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .logo-icon {
+            color: var(--secondary);
+            font-size: 1.8rem;
+            animation: pulse 4s infinite alternate;
+        }
+        
+        .logo-text {
+            font-size: 1.5rem;
+            font-weight: 700;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        nav ul {
+            display: flex;
+            gap: 2rem;
+            list-style: none;
+        }
+        
+        nav a {
+            color: var(--gray);
+            text-decoration: none;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        nav a:hover {
+            color: var(--light);
+        }
+        
+        nav a::after {
+            content: '';
+            position: absolute;
+            bottom: -5px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--secondary);
+            transition: width 0.3s ease;
+        }
+        
+        nav a:hover::after {
+            width: 100%;
+        }
+        
+        /* Main Content */
+        .container {
+            max-width: 1200px;
+            margin: 2rem auto;
+            padding: 0 2rem;
+            flex: 1;
+        }
+        
+        .hero {
+            text-align: center;
+            margin-bottom: 3rem;
+        }
+        
+        .hero h1 {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            background: linear-gradient(90deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        
+        .hero p {
+            font-size: 1.2rem;
+            color: var(--gray);
+            max-width: 700px;
+            margin: 0 auto;
+        }
+        
+        /* Upload Card */
+        .upload-card {
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border: 1px solid var(--glass-border);
+            border-radius: 20px;
+            padding: 3rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            transition: all 0.3s ease;
+        }
+        
+        .upload-card:hover {
+            box-shadow: 0 15px 40px rgba(110, 68, 255, 0.2);
+            transform: translateY(-5px);
+        }
+        
+        .upload-container {
+            border: 2px dashed var(--glass-border);
+            border-radius: 16px;
+            padding: 3rem 2rem;
+            text-align: center;
+            margin-bottom: 2rem;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .upload-container::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent,
+                transparent,
+                transparent,
+                rgba(110, 68, 255, 0.1),
+                transparent,
+                transparent,
+                transparent
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        
+        .upload-container.drag-over {
+            border-color: var(--secondary);
+            background: rgba(0, 247, 255, 0.05);
+        }
+        
+        .upload-icon {
+            font-size: 3.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--secondary);
+        }
+        
+        .upload-container h2 {
+            font-size: 1.8rem;
+            margin-bottom: 1rem;
+            color: var(--light);
+        }
+        
+        .upload-container p {
+            color: var(--gray);
+            margin-bottom: 1.5rem;
+        }
+        
+        /* Preview Section */
+        .preview-container {
+            display: none;
+            margin-bottom: 2rem;
+            text-align: center;
+            animation: fadeIn 0.5s ease;
+        }
+        
+        #image-preview {
+            max-width: 100%;
+            max-height: 400px;
+            border-radius: 12px;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+            border: 1px solid var(--glass-border);
+        }
+        
+        .file-info {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            color: var(--gray);
+        }
+        
+        /* Buttons */
+        .btn {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            padding: 14px 28px;
+            font-size: 1rem;
+            border-radius: 50px;
+            cursor: pointer;
+            display: inline-block;
+            transition: all 0.3s ease;
+            font-weight: 600;
+            box-shadow: 0 4px 15px rgba(110, 68, 255, 0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 25px rgba(110, 68, 255, 0.4);
+        }
+        
+        .btn:active {
+            transform: translateY(1px);
+        }
+        
+        .btn:disabled {
+            background: var(--glass);
+            color: var(--gray);
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+        
+        .btn::after {
+            content: '';
+            position: absolute;
+            top: -50%;
+            left: -50%;
+            width: 200%;
+            height: 200%;
+            background: linear-gradient(
+                to bottom right,
+                transparent,
+                transparent,
+                transparent,
+                rgba(255, 255, 255, 0.2),
+                transparent,
+                transparent,
+                transparent
+            );
+            transform: rotate(30deg);
+            animation: shine 3s infinite;
+        }
+        
+        /* Result Section */
+        .result-container {
+            display: none;
+            margin-top: 2rem;
+            padding: 2rem;
+            background: var(--glass);
+            backdrop-filter: blur(10px);
+            border-radius: 16px;
+            border-left: 4px solid var(--secondary);
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            animation: fadeIn 0.5s ease;
+        }
+        
+        .result-title {
+            font-size: 1.5rem;
+            margin-bottom: 1.5rem;
+            color: var(--light);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .result-title i {
+            color: var(--secondary);
+        }
+        
+        #generated-prompt {
+            white-space: pre-wrap;
+            background: rgba(0, 0, 0, 0.3);
+            padding: 1.5rem;
+            border-radius: 12px;
+            font-family: 'Roboto Mono', monospace;
+            border: 1px solid var(--glass-border);
+            max-height: 400px;
+            overflow-y: auto;
+            line-height: 1.8;
+            color: var(--light);
+        }
+        
+        /* Loader */
+        .loader {
+            display: none;
+            text-align: center;
+            padding: 2rem;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 3px solid transparent;
+            border-top-color: var(--secondary);
+            border-radius: 50%;
+            margin: 0 auto 1rem;
+            animation: spin 1s linear infinite;
+            position: relative;
+        }
+        
+        .spinner::before,
+        .spinner::after {
+            content: '';
+            position: absolute;
+            border-radius: 50%;
+            border: 3px solid transparent;
+        }
+        
+        .spinner::before {
+            top: 5px;
+            left: 5px;
+            right: 5px;
+            bottom: 5px;
+            border-top-color: var(--primary);
+            animation: spin 2s linear infinite;
+        }
+        
+        .spinner::after {
+            top: 15px;
+            left: 15px;
+            right: 15px;
+            bottom: 15px;
+            border-top-color: var(--accent);
+            animation: spin 3s linear infinite;
+        }
+        
+        .loader p {
+            color: var(--secondary);
+            font-size: 1.1rem;
+        }
+        
+        /* Error Message */
+        .error {
+            color: #ff6b6b;
+            padding: 1.5rem;
+            background: rgba(255, 45, 117, 0.1);
+            border-radius: 12px;
+            margin: 1rem 0;
+            display: none;
+            border-left: 4px solid var(--accent);
+            animation: fadeIn 0.3s ease;
+        }
+        
+        /* Footer */
+        footer {
+            background: var(--darker);
+            border-top: 1px solid var(--glass-border);
+            padding: 2rem;
+            margin-top: 3rem;
+        }
+        
+        .footer-content {
+            max-width: 1200px;
+            margin: 0 auto;
+            display: flex;
+            flex-wrap: wrap;
+            justify-content: space-between;
+            gap: 2rem;
+        }
+        
+        .footer-section {
+            flex: 1;
+            min-width: 250px;
+        }
+        
+        .footer-section h3 {
+            color: var(--light);
+            margin-bottom: 1.5rem;
+            font-size: 1.2rem;
+            position: relative;
+            display: inline-block;
+        }
+        
+        .footer-section h3::after {
+            content: '';
+            position: absolute;
+            bottom: -8px;
+            left: 0;
+            width: 40px;
+            height: 2px;
+            background: var(--secondary);
+        }
+        
+        .footer-section p {
+            color: var(--gray);
+            margin-bottom: 1rem;
+        }
+        
+        .footer-links {
+            list-style: none;
+        }
+        
+        .footer-links li {
+            margin-bottom: 0.8rem;
+        }
+        
+        .footer-links a {
+            color: var(--gray);
+            text-decoration: none;
+            transition: all 0.3s ease;
+        }
+        
+        .footer-links a:hover {
+            color: var(--light);
+            padding-left: 5px;
+        }
+        
+        .social-links {
+            display: flex;
+            gap: 1rem;
+            margin-top: 1.5rem;
+        }
+        
+        .social-links a {
+            color: var(--gray);
+            font-size: 1.2rem;
+            transition: all 0.3s ease;
+        }
+        
+        .social-links a:hover {
+            color: var(--secondary);
+            transform: translateY(-3px);
+        }
+        
+        .copyright {
+            text-align: center;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--glass-border);
+            color: var(--gray);
+            font-size: 0.9rem;
+        }
+        
+        .api-license {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            font-size: 0.8rem;
+            display: inline-block;
+            margin-top: 1rem;
+        }
+        
+        .api-license a {
+            color: var(--secondary);
+            text-decoration: none;
+        }
+        
+        /* Animations */
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        @keyframes pulse {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        
+        @keyframes shine {
+            0% { transform: rotate(30deg) translate(-30%, -30%); }
+            100% { transform: rotate(30deg) translate(30%, 30%); }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        /* Responsive Design */
+        @media (max-width: 768px) {
+            header {
+                flex-direction: column;
+                gap: 1rem;
+                padding: 1rem;
+            }
+            
+            nav ul {
+                gap: 1rem;
+            }
+            
+            .hero h1 {
+                font-size: 2.2rem;
+            }
+            
+            .upload-card {
+                padding: 2rem 1rem;
+            }
+            
+            .footer-content {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Futuristic Header -->
+    <header>
+        <div class="logo">
+            <div class="logo-icon">
+                <i class="fas fa-robot"></i>
+            </div>
+            <div class="logo-text">Photex AI</div>
+        </div>
+        <nav>
+            <ul>
+                <li><a href="index.html"><i class="fas fa-home"></i> Home</a></li>
+                <li><a href="#"><i class="fas fa-lightbulb"></i> Features</a></li>
+                <li><a href="#"><i class="fas fa-cogs"></i> API</a></li>
+                <li><a href="#"><i class="fas fa-envelope"></i> Contact</a></li>
+            </ul>
+        </nav>
+    </header>
+
+    <!-- Main Content -->
+    <div class="container">
+        <div class="hero">
+            <h1>Transform Images into AI Prompts</h1>
+            <p>Upload any image and our advanced AI will generate a detailed, structured prompt perfect for your creative projects.</p>
+        </div>
+
+        <!-- Upload Card -->
+        <div class="upload-card">
+            <div id="upload-container" class="upload-container">
+                <div class="upload-icon">
+                    <i class="fas fa-cloud-upload-alt"></i>
+                </div>
+                <h2>Drag & Drop Your Image</h2>
+                <p>or</p>
+                <input type="file" id="file-input" accept="image/*" hidden>
+                <button class="btn" id="browse-btn">
+                    <i class="fas fa-folder-open"></i> Browse Files
+                </button>
+                <p>Supports JPG, PNG, or WebP (max 2MB)</p>
+            </div>
+            
+            <div id="preview-container" class="preview-container">
+                <img id="image-preview" src="" alt="Preview">
+                <div class="file-info" id="file-info"></div>
+            </div>
+            
+            <div class="error" id="error-message"></div>
+            
+            <div class="actions" style="text-align: center;">
+                <button class="btn" id="generate-btn" disabled>
+                    <i class="fas fa-magic"></i> Generate Prompt
+                </button>
+            </div>
+            
+            <div class="loader" id="loader">
+                <div class="spinner"></div>
+                <p>Analyzing image with AI...</p>
+            </div>
+        </div>
+        
+        <!-- Result Section -->
+        <div class="result-container" id="result-container">
+            <h3 class="result-title">
+                <i class="fas fa-scroll"></i> Generated Prompt
+            </h3>
+            <div id="generated-prompt"></div>
+            <div class="api-license">
+                Powered by with LLaMA 4 Maverick 
+            </div>
+        </div>
+    </div>
+
+    <!-- Futuristic Footer -->
+    <footer>
+        <div class="footer-content">
+            <div class="footer-section">
+                <h3>About Photex AI</h3>
+                <p>Advanced AI tool that transforms images into detailed prompts for creative generation, powered by Meta Llama 4.</p>
+                <div class="social-links">
+                    <a href="#"><i class="fab fa-twitter"></i></a>
+                    <a href="#"><i class="fab fa-github"></i></a>
+                    <a href="#"><i class="fab fa-discord"></i></a>
+                    <a href="#"><i class="fab fa-linkedin"></i></a>
+                </div>
+            </div>
+            
+            <div class="footer-section">
+                <h3>Quick Links</h3>
+                <ul class="footer-links">
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> Documentation</a></li>
+                    <li><a href="#"><i class="fas fa-chevron-right"></i> API Reference</a></li>
+                   
+                </ul>
+            </div>
+            
+            <div class="footer-section">
+                <h3>API & Services</h3>
+                <ul class="footer-links">
+                    <li><a href="https://groq.com/" target="_blank"><i class="fas fa-chevron-right"></i> Groq Cloud</a></li>
+                    <li><a href="https://groq.com/docs" target="_blank"><i class="fas fa-chevron-right"></i> API Documentation</a></li>
+                    <li><a href="https://groq.com/pricing" target="_blank"><i class="fas fa-chevron-right"></i> Pricing</a></li>
+                    <li><a href="https://groq.com/terms" target="_blank"><i class="fas fa-chevron-right"></i> Terms of Service</a></li>
+                </ul>
+            </div>
+        </div>
+        
+        <div class="copyright">
+            <p>&copy; 2025 Photex AI. All rights reserved. | <a href="#">Privacy Policy</a> | <a href="#">Terms of Use</a></p>
+        </div>
+    </footer>
+
+    <script>
+        const uploadContainer = document.getElementById('upload-container');
+        const fileInput = document.getElementById('file-input');
+        const browseBtn = document.getElementById('browse-btn');
+        const previewContainer = document.getElementById('preview-container');
+        const imagePreview = document.getElementById('image-preview');
+        const fileInfo = document.getElementById('file-info');
+        const generateBtn = document.getElementById('generate-btn');
+        const resultContainer = document.getElementById('result-container');
+        const generatedPrompt = document.getElementById('generated-prompt');
+        const loader = document.getElementById('loader');
+        const errorMessage = document.getElementById('error-message');
+
+        // Browse button click handler
+        browseBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // File input change handler
+        fileInput.addEventListener('change', handleFileSelect);
+
+        // Drag and drop handlers
+        uploadContainer.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.add('drag-over');
+        });
+
+        uploadContainer.addEventListener('dragleave', () => {
+            uploadContainer.classList.remove('drag-over');
+        });
+
+        uploadContainer.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadContainer.classList.remove('drag-over');
+            
+            if (e.dataTransfer.files.length) {
+                handleFile(e.dataTransfer.files[0]);
+            }
+        });
+
+        // Handle file selection
+        function handleFileSelect(e) {
+            if (e.target.files.length) {
+                handleFile(e.target.files[0]);
+            }
+        }
+
+        // Process selected file
+        function handleFile(file) {
+            // Reset previous state
+            hideError();
+            resultContainer.style.display = 'none';
+            generateBtn.disabled = true;
+            
+            // Validate file
+            if (!file.type.match('image.*')) {
+                showError('Please select a valid image file (JPG, PNG, WebP)');
+                return;
+            }
+            
+            if (file.size > 2 * 1024 * 1024) {
+                showError('File size exceeds 2MB limit');
+                return;
+            }
+            
+            // Preview image
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                try {
+                    // Quick validation of the image
+                    const img = new Image();
+                    img.onload = () => {
+                        imagePreview.src = e.target.result;
+                        previewContainer.style.display = 'block';
+                        generateBtn.disabled = false;
+                        
+                        // Show file info
+                        fileInfo.innerHTML = `
+                            <strong>${file.name}</strong><br>
+                            ${(file.size / 1024).toFixed(1)} KB · ${file.type.replace('image/', '').toUpperCase()}
+                        `;
+                    };
+                    img.onerror = () => {
+                        showError('The selected file is not a valid image');
+                        previewContainer.style.display = 'none';
+                    };
+                    img.src = e.target.result;
+                } catch (error) {
+                    showError('Error processing image');
+                    previewContainer.style.display = 'none';
+                }
+            };
+            reader.onerror = () => {
+                showError('Error reading file');
+                previewContainer.style.display = 'none';
+            };
+            reader.readAsDataURL(file);
+        }
+
+        // Generate button click handler
+        generateBtn.addEventListener('click', async () => {
+            const imageData = imagePreview.src;
+            
+            if (!imageData || imageData === '') {
+                showError('Please upload an image first');
+                return;
+            }
+            
+            // Show loader, hide results
+            loader.style.display = 'block';
+            resultContainer.style.display = 'none';
+            hideError();
+            generateBtn.disabled = true;
+            
+            try {
+                // Simple client-side validation
+                if (!imageData.startsWith('data:image')) {
+                    throw new Error('Invalid image format');
+                }
+                
+                // Send to server
+                const response = await fetch('/generate', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 'image-data': imageData })
+                });
+                
+                const data = await response.json();
+                
+                if (!response.ok) {
+                    throw new Error(data.error || 'Failed to generate prompt');
+                }
+                
+                // Display result
+                generatedPrompt.textContent = data.prompt;
+                resultContainer.style.display = 'block';
+            } catch (error) {
+                showError(error.message);
+            } finally {
+                loader.style.display = 'none';
+                generateBtn.disabled = false;
+            }
+        });
+
+        function showError(message) {
+            errorMessage.textContent = message;
+            errorMessage.style.display = 'block';
+            previewContainer.style.display = 'none';
+            generateBtn.disabled = true;
+        }
+
+        function hideError() {
+            errorMessage.style.display = 'none';
+        }
+    </script>
+</body>
+</html>
